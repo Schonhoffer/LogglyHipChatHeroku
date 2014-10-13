@@ -1,0 +1,16 @@
+{
+  "name": "loggly-hipchat-heroku",
+  "version": "0.0.1",
+  "description": "Send Loggly alerts to Hipchat",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "~4.9.x",
+    "body-parser": "~1.9.x"
+  },
+  "engines": {
+    "node": "0.10.x"
+  }
+}
