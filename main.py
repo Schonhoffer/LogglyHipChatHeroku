@@ -15,8 +15,10 @@ hipchat_parameter_names = ['room_id','from','color','notify','auth_token']
 class MainHandler(tornado.web.RequestHandler):
     def prepare(self):
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
+        
     def get(self):
         self.write(json_encode({'status': 'OK'}))
+        
     def post(self):
         hipchat_params = self._get_hipchat_query_params()
         hipchat_params['from'] = hipchat_params.get('from','Loggly')
@@ -30,23 +32,27 @@ class MainHandler(tornado.web.RequestHandler):
         self._send_hipchat_message(hipchat_params);
   
         self.write(json_encode({'result': 'sent'}))
+        
     def _send_hipchat_message(self, hipchat_params):
         hipster = hipchat.HipChat(token=hipchat_params['auth_token'])
         hipster.method('rooms/message', method='POST', parameters=hipchat_params)
         logging.info('Sent HipChat message')
+        
     def _create_message_text(self, template_data):
         with open('message_template.html','r') as f: template = f.read()
         compiled_template = tornado.template.Template(template)
         return compiled_template.generate(**template_data)
+        
     def _get_hipchat_query_params(self):
          return {
-            key: self.get_query_argument(key, None) 
-            for key in hipchat_parameter_names 
-            if self.get_query_argument(key, None) != None }
+            k: self.get_query_argument(k) 
+            for k in hipchat_parameter_names 
+            if self.get_query_argument(k, None) != None }
+            
     def _get_extra_query_params(self):
-        #todo custom query params get passed to 
-        #_.omit(request.query, hipchat_parameter_names);
-        return {}
+        all_arg_names = [k for k in self.request.query_arguments.keys() if k not in hipchat_parameter_names]
+        return {k:self.get_query_argument(k) for k in all_arg_names}
+ 
  
 def main():
     application = tornado.web.Application([
