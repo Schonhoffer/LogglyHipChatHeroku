@@ -26,6 +26,7 @@ class MainHandler(tornado.web.RequestHandler):
         template_data = json_decode(self.request.body);
         template_data['hipchat'] = hipchat_params;
         template_data['custom'] = self._get_extra_query_params()
+        template_data['recent_hits'] = [json_decode(hit) for hit in template_data['recent_hits']];
         
         hipchat_params['message'] = self._create_message_text(template_data);
   
