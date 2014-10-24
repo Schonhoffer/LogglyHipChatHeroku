@@ -25,8 +25,8 @@ class MainHandler(tornado.web.RequestHandler):
         
         template_data = json_decode(self.request.body);
         template_data['hipchat'] = hipchat_params;
-        template_data['custom'] = self._get_extra_query_params()
-        template_data['recent_hits'] = [json_decode(hit) for hit in template_data['recent_hits']];
+        template_data['custom'] = self._get_custom_query_params()
+        template_data['recent_hits'] = self._decode_recent_hits(template_data['recent_hits'])
         
         hipchat_params['message'] = self._create_message_text(template_data);
   
@@ -42,7 +42,11 @@ class MainHandler(tornado.web.RequestHandler):
     def _create_message_text(self, template_data):
         with open('message_template.html','r') as f: template = f.read()
         compiled_template = tornado.template.Template(template)
-        return compiled_template.generate(**template_data)
+        
+        message_text = compiled_template.generate(**template_data)
+        logging.debug('Message text is "' + message_text + '"')
+        
+        return message_text
         
     def _get_hipchat_query_params(self):
          return {
@@ -50,9 +54,24 @@ class MainHandler(tornado.web.RequestHandler):
             for k in hipchat_parameter_names 
             if self.get_query_argument(k, None) != None }
             
-    def _get_extra_query_params(self):
+    def _get_custom_query_params(self):
         all_arg_names = [k for k in self.request.query_arguments.keys() if k not in hipchat_parameter_names]
         return {k:self.get_query_argument(k) for k in all_arg_names}
+        
+    def _decode_recent_hits(self, hits):
+        return [x for x in self._decode_json_generator(hits)]
+    
+    def _decode_json_generator(self, hits):
+        for hit in hits:
+            escaped = self._escape_backslash(hit)
+            logging.debug('Decoding hit: "' + escaped + '"')
+            try:
+                yield json_decode(escaped)
+            except ValueError as error:
+                logging.exception(error)
+    
+    def _escape_backslash(self, input_str):
+        return input_str.replace('\\','\\\\')
  
  
 def main():
