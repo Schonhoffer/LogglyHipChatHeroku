@@ -63,15 +63,15 @@ class MainHandler(tornado.web.RequestHandler):
     
     def _decode_json_generator(self, hits):
         for hit in hits:
-            escaped = self._escape_backslash(hit)
+            escaped = self._escape_json_control_characters(hit)
             logging.debug('Decoding hit: "' + escaped + '"')
             try:
                 yield json_decode(escaped)
             except ValueError as error:
                 logging.exception(error)
     
-    def _escape_backslash(self, input_str):
-        return input_str.replace('\\','\\\\')
+    def _escape_json_control_characters(self, input_str):
+        return input_str.replace('\\','\\\\').replace('\r\n', '\\r\\n')
  
  
 def main():
